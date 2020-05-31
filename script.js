@@ -1,67 +1,125 @@
-var button = document.getElementById("enter");
-var input = document.getElementById("userinput");
-var ul = document.querySelector("ul");
-var eachli = document.querySelectorAll("li");
-var deletebtn = document.querySelectorAll("button.delete");
+var todobtn = document.querySelector(".todo-button");
+var todoinput = document.querySelector(".todo-input");
+var todolist = document.querySelector(".todo-list");
+var filteroption = document.querySelector(".filter-todo");
 
-ul.addEventListener("click", checkItem);
-button.addEventListener("click", clickfunction);
-input.addEventListener("keypress", enterInputfunction);
+document.addEventListener("DOMContentLoaded", getTodos);
+todobtn.addEventListener("click", addtodo);
+todolist.addEventListener("click", deletecheck);
+filteroption.addEventListener("click", filtertodo);
 
-deletebtn.forEach(function (i) {
-  i.addEventListener("click", () => {
-    i.parentNode.parentNode.removeChild(i.parentNode);
+function filtertodo(e) {
+  let todos = todolist.childNodes;
+  todos.forEach(function (todo) {
+    switch (e.target.value) {
+      case "all":
+        todo.style.display = "flex";
+        break;
+      case "completed":
+        if (todo.classList.contains("completed")) {
+          todo.style.display = "flex";
+        } else {
+          todo.style.display = "none";
+        }
+        break;
+      case "uncompleted":
+        if (!todo.classList.contains("completed")) {
+          todo.style.display = "flex";
+        } else {
+          todo.style.display = "none";
+        }
+        break;
+    }
   });
-});
-
-function deleteItemfunction(i) {
-  console.log(i);
-  i.parentNode.removeChild(i);
-  //console.log(i.parentElement.nodeName)
-}
-/*
-forEach(var btn of deletebtn) {
-	btn.addEventListener("click", deleteItemfunction);
 }
 
-function deleteItemfunction(eventItem, event) {
-	alert(event.target + " also " + eventItem)
-}*/
+function deletecheck(e) {
+  let item = e.target;
+  if (item.classList[0] === "todocheck") {
+    let todo = item.parentElement;
 
-function checkItem(event) {
-  //var target = getEventTarget(event);
-  event.target.classList.toggle("done");
-}
-
-function inputLength() {
-  return input.value.length;
-}
-
-function clickfunction() {
-  if (inputLength() > 0) {
-    createElementList();
+    //todo.addEventListener("transitionend", function () {
+    todo.classList.toggle("completed");
+    //});
+  }
+  if (item.classList[0] === "todotrash") {
+    let todo = item.parentElement;
+    todo.classList.add("fall");
+    todo.addEventListener("transitionend", function () {
+      todo.remove();
+      removeLocalTodos(todo);
+    });
+    //todo.remove();
   }
 }
 
-function createElementList() {
-  var li = document.createElement("li");
+function createItem(e, value, saveflag) {
+  let tododiv = document.createElement("div");
+  tododiv.classList.add("tododiv");
 
-  var button = document.createElement("button");
-  button.classList.add("delete");
+  let newtodo = document.createElement("li");
 
-  var img = document.createElement("img");
-  img.src = "./trash_bin_icon-icons.com_67981.png";
+  newtodo.innerText = value;
+  newtodo.classList.add("todoli");
 
-  li.appendChild(document.createTextNode(input.value));
-  button.appendChild(img);
-  li.appendChild(button);
-  ul.appendChild(li);
+  tododiv.appendChild(newtodo);
+  if (saveflag == true) {
+    saveLocalTodos(todoinput.value);
+  }
+  let checkbtn = document.createElement("button");
+  checkbtn.innerHTML = `<i class="fas fa-check"></i>`;
+  checkbtn.classList.add("todocheck");
+  tododiv.appendChild(checkbtn);
 
-  input.value = "";
+  let trashbtn = document.createElement("button");
+  trashbtn.innerHTML = `<i class="fas fa-trash"></i>`;
+  trashbtn.classList.add("todotrash");
+  tododiv.appendChild(trashbtn);
+  todolist.appendChild(tododiv);
 }
 
-function enterInputfunction(event) {
-  if (inputLength() > 0 && event.keyCode === 13) {
-    createElementList();
+function addtodo(e) {
+  e.preventDefault();
+  if (todoinput.value.length > 0) {
+    let saveflag = true;
+    createItem(e, todoinput.value, saveflag);
+    todoinput.value = "";
+  }
+}
+
+function initializeTodos() {
+  let todos;
+  if (localStorage.getItem("todos") === null) {
+    todos = [];
+  } else {
+    todos = JSON.parse(localStorage.getItem("todos"));
+  }
+  return todos;
+}
+
+function saveLocalTodos(todo) {
+  let todos = initializeTodos();
+  todos.push(todo);
+  localStorage.setItem("todos", JSON.stringify(todos));
+}
+
+function getTodos(e) {
+  let todos = initializeTodos();
+  todos.forEach(function (todo) {
+    saveflag = false;
+    createItem(e, todo, saveflag);
+  });
+}
+function removeLocalTodos(todo) {
+  let todos = initializeTodos();
+
+  const todotext = todo.children[0].innerText;
+
+  let ind = todos.indexOf(todotext);
+  //console.log(ind);
+  if (ind != -1) {
+    console.log(ind);
+    todos.splice(ind, 1);
+    localStorage.setItem("todos", JSON.stringify(todos));
   }
 }
